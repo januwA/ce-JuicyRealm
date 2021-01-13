@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="34">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>2</ID>
+      <Description>"远程武器，无限子弹"</Description>
+      <Options moHideChildren="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+      <LastState Activated="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{
+  有些武器可能无效
+}
+
+define(address,RangedWeapon:Fire+23)
+define(bytes,D9 9E D4 00 00 00)
+
+[ENABLE]
+{$lua}
+ if syntaxcheck then return end
+  autorunMonoMethod("RangedWeapon", "Fire")
+{$asm}
+
+assert(address,bytes)
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+  pushf
+  push ecx
+
+  test eax,eax
+  jnz @f
+  // player eax==1
+   mov ecx,[esi+000000D0] // max
+   mov [esi+000000D4],ecx // 将玩家的子弹设置为当前子弹最大上限
+   jmp code
+
+@@:// enemy
+code:
+   pop ecx
+   popf
+  // fstp dword ptr [esi+000000D4]
+  jmp return
+
+address:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+{$lua}
+ if syntaxcheck then return end
+  autorunMonoMethod("RangedWeapon", "Fire")
+{$asm}
+
+address:
+  db bytes
+
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: RangedWeapon:Fire+23
+
+RangedWeapon:Fire+4: 83 EC 14           - sub esp,14
+RangedWeapon:Fire+7: 8B 75 08           - mov esi,[ebp+08]
+RangedWeapon:Fire+a: 83 EC 08           - sub esp,08
+RangedWeapon:Fire+d: FF 75 0C           - push [ebp+0C]
+RangedWeapon:Fire+10: 56                 - push esi
+RangedWeapon:Fire+11: E8 AA 00 00 00     - call RangedWeapon:FireParticle
+RangedWeapon:Fire+16: 83 C4 10           - add esp,10
+RangedWeapon:Fire+19: D9 86 D4 00 00 00  - fld dword ptr [esi+000000D4]
+RangedWeapon:Fire+1f: D9 E8              - fld1 
+RangedWeapon:Fire+21: DE E9              - fsubp st(1),st(0)
+// ---------- INJECTING HERE ----------
+RangedWeapon:Fire+23: D9 9E D4 00 00 00  - fstp dword ptr [esi+000000D4]
+// ---------- DONE INJECTING  ----------
+RangedWeapon:Fire+29: 83 EC 08           - sub esp,08
+RangedWeapon:Fire+2c: 6A 01              - push 01
+RangedWeapon:Fire+2e: 56                 - push esi
+RangedWeapon:Fire+2f: 8B 06              - mov eax,[esi]
+RangedWeapon:Fire+31: 90                 - nop 
+RangedWeapon:Fire+32: 90                 - nop 
+RangedWeapon:Fire+33: 90                 - nop 
+RangedWeapon:Fire+34: FF 50 40           - call dword ptr [eax+40]
+RangedWeapon:Fire+37: 83 C4 10           - add esp,10
+RangedWeapon:Fire+3a: 8B 4D 0C           - mov ecx,[ebp+0C]
+}
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>5</ID>
+      <Description>"一击必杀"</Description>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{
+  拯救地球不能秒
+}
+
+define(address,CreatureObject:set_CurrentHp+89)
+define(bytes,D9 9B A4 00 00 00)
+
+[ENABLE]
+{$lua}
+  if syntaxcheck then return end
+  autorunMonoMethod("CreatureObject", "set_CurrentHp")
+{$asm}
+
+assert(address,bytes)
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+  pushf
+  push ecx
+
+  test eax,eax
+  jz @f
+  // player eax==1，有意外情况
+  // mov ecx,[ebx+000000A8] // player max hp
+  // mov [ebx+000000A4],ecx // 设置当前HP为最大HP
+  jmp code
+
+  @@://enemy
+  mov [ebx+000000A4],0
+
+code:
+  pop ecx
+  popf
+  // fstp dword ptr [ebx+000000A4]
+  jmp return
+
+address:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+{$lua}
+  if syntaxcheck then return end
+  autorunMonoMethod("CreatureObject", "set_CurrentHp")
+{$asm}
+address:
+  db bytes
+
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: CreatureObject:set_CurrentHp+89
+
+CreatureObject:set_CurrentHp+70: 8B 5D 08           - mov ebx,[ebp+08]
+CreatureObject:set_CurrentHp+73: DF F1              - fcomip st(0),st(1)
+CreatureObject:set_CurrentHp+75: DD D8              - fstp st(0)
+CreatureObject:set_CurrentHp+77: 76 07              - jna CreatureObject:set_CurrentHp+80
+CreatureObject:set_CurrentHp+79: D9 EE              - fldz 
+CreatureObject:set_CurrentHp+7b: DD 5D E8           - fstp qword ptr [ebp-18]
+CreatureObject:set_CurrentHp+7e: EB 06              - jmp CreatureObject:set_CurrentHp+86
+CreatureObject:set_CurrentHp+80: D9 45 0C           - fld dword ptr [ebp+0C]
+CreatureObject:set_CurrentHp+83: DD 5D E8           - fstp qword ptr [ebp-18]
+CreatureObject:set_CurrentHp+86: DD 45 E8           - fld qword ptr [ebp-18]
+// ---------- INJECTING HERE ----------
+CreatureObject:set_CurrentHp+89: D9 9B A4 00 00 00  - fstp dword ptr [ebx+000000A4]
+// ---------- DONE INJECTING  ----------
+CreatureObject:set_CurrentHp+8f: 8D 65 F4           - lea esp,[ebp-0C]
+CreatureObject:set_CurrentHp+92: 5E                 - pop esi
+CreatureObject:set_CurrentHp+93: 5F                 - pop edi
+CreatureObject:set_CurrentHp+94: 5B                 - pop ebx
+CreatureObject:set_CurrentHp+95: C9                 - leave 
+CreatureObject:set_CurrentHp+96: C3                 - ret 
+CreatureObject:set_CurrentHp+97: 6A 78              - push 78
+CreatureObject:set_CurrentHp+99: 68 78 06 00 00     - push 00000678
+CreatureObject:set_CurrentHp+9e: E8 25 71 05 E8     - call 04370F38
+1C319E13: 00 00              - add [eax],al
+}
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>7</ID>
+      <Description>"无限能量(鼠标右键)"</Description>
+      <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{
+PlayerObject:MinorSkill+40: D9 9F C4 01 00 00  - fstp dword ptr [edi+000001C4]
+}
+
+define(address,PlayerObject:MinorSkill+40)
+define(bytes,D9 9F C4 01 00 00)
+
+[ENABLE]
+{$lua}
+  if syntaxcheck then return end
+  autorunMonoMethod("PlayerObject", "MinorSkill")
+{$asm}
+
+assert(address,bytes)
+alloc(newmem,$1000)
+
+label(return)
+label(pPower)
+
+newmem:
+  mov [pPower],edi
+  // fstp dword ptr [edi+000001C4]
+  jmp return
+align 10 CC
+pPower:
+  dd 0
+
+address:
+  jmp newmem
+  nop
+return:
+registerSymbol(pPower)
+
+[DISABLE]
+{$lua}
+  if syntaxcheck then return end
+  autorunMonoMethod("PlayerObject", "MinorSkill")
+{$asm}
+
+address:
+  db bytes
+
+unregisterSymbol(pPower)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: PlayerObject:MinorSkill+40
+
+PlayerObject:MinorSkill+1f: B8 58 6F 2F 14     - mov eax,142F6F58
+PlayerObject:MinorSkill+24: D9 00              - fld dword ptr [eax]
+PlayerObject:MinorSkill+26: DF F1              - fcomip st(0),st(1)
+PlayerObject:MinorSkill+28: DD D8              - fstp st(0)
+PlayerObject:MinorSkill+2a: 76 05              - jna PlayerObject:MinorSkill+31
+PlayerObject:MinorSkill+2c: E9 C6 00 00 00     - jmp PlayerObject:MinorSkill+f7
+PlayerObject:MinorSkill+31: D9 87 C4 01 00 00  - fld dword ptr [edi+000001C4]
+PlayerObject:MinorSkill+37: B8 58 6F 2F 14     - mov eax,142F6F58
+PlayerObject:MinorSkill+3c: D9 00              - fld dword ptr [eax]
+PlayerObject:MinorSkill+3e: DE E9              - fsubp st(1),st(0)
+// ---------- INJECTING HERE ----------
+PlayerObject:MinorSkill+40: D9 9F C4 01 00 00  - fstp dword ptr [edi+000001C4]
+// ---------- DONE INJECTING  ----------
+PlayerObject:MinorSkill+46: 85 FF              - test edi,edi
+PlayerObject:MinorSkill+48: 0F 84 AF 00 00 00  - je PlayerObject:MinorSkill+fd
+PlayerObject:MinorSkill+4e: 8D 87 D4 00 00 00  - lea eax,[edi+000000D4]
+PlayerObject:MinorSkill+54: 83 EC 0C           - sub esp,0C
+PlayerObject:MinorSkill+57: 50                 - push eax
+PlayerObject:MinorSkill+58: E8 73 13 76 E4     - call UnityEngine:Vector3:get_sqrMagnitude
+PlayerObject:MinorSkill+5d: 83 C4 10           - add esp,10
+PlayerObject:MinorSkill+60: D9 05 B0 AD 14 18  - fld dword ptr [1814ADB0]
+PlayerObject:MinorSkill+66: 89 7D E4           - mov [ebp-1C],edi
+PlayerObject:MinorSkill+69: DF F1              - fcomip st(0),st(1)
+}
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>8</ID>
+          <Description>"HP"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Float</VariableType>
+          <Address>[pPower]+A4</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>16</ID>
+          <Description>"移动速度"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Float</VariableType>
+          <Address>[pPower]+B4</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>11</ID>
+          <Description>"金币"</Description>
+          <ShowAsSigned>1</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>[pPower]+1D4</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+  <DisassemblerComments>
+    <DisassemblerComment>
+      <Address>2039E899</Address>
+      <Comment>将值读出来写入ST
+</Comment>
+    </DisassemblerComment>
+    <DisassemblerComment>
+      <Address>2039E89F</Address>
+      <Comment>将1写入ST，TOP+1
+</Comment>
+    </DisassemblerComment>
+    <DisassemblerComment>
+      <Address>2039E8A1</Address>
+      <Comment>ST1=ST(1)-ST(0)，TOP-1
+</Comment>
+    </DisassemblerComment>
+    <DisassemblerComment>
+      <Address>2039E8A3</Address>
+      <Comment>将ST(0)的值写入内存, TOP+1
+</Comment>
+    </DisassemblerComment>
+  </DisassemblerComments>
+</CheatTable>
